@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Usuarios')}"></head>
+<body>
+<div th:replace="~{layout :: sidebar}"></div>
+<main class="content">
+<div th:replace="~{layout :: topbar('Usuarios')}"></div>
+
+<div class="mb-3"><a class="btn btn-primary" th:href="@{/usuarios/nuevo}"><i class="bi bi-plus-lg"></i> Nuevo usuario</a></div>
+<div class="card shadow-sm"><div class="card-body table-responsive">
+<table class="table table-striped table-hover"><thead><tr><th>Usuario</th><th>Nombre completo</th><th>Email</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
+<tbody><tr th:each="u : ${usuarios}">
+<td th:text="${u.username}"></td><td th:text="${u.nombreCompleto}"></td><td th:text="${u.email}"></td><td><span class="badge bg-primary" th:text="${u.rol}"></span></td><td th:text="${u.activo ? 'Si' : 'No'}"></td>
+<td><a class="btn btn-sm btn-outline-primary" th:href="@{'/usuarios/editar/' + ${u.id}}">Editar</a>
+<a class="btn btn-sm btn-outline-danger" th:href="@{'/usuarios/eliminar/' + ${u.id}}" onclick="return confirm('Eliminar este usuario?')">Eliminar</a></td>
+</tr></tbody></table>
+<p class="text-muted" th:if="${#lists.isEmpty(usuarios)}">Sin usuarios registrados.</p>
+</div></div>
+
+</main>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

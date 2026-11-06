@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Reportes')}"></head>
+<body>
+<div th:replace="~{layout :: sidebar}"></div>
+<main class="content">
+<div th:replace="~{layout :: topbar('Reportes')}"></div>
+
+<div class="mb-3"><a class="btn btn-success" th:href="@{/reportes/exportar-csv}"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV</a></div>
+<div class="row g-3 mb-4" th:if="${resumen != null}">
+  <div class="col-md-3"><div class="card card-stat shadow-sm"><div class="card-body"><h6 class="text-muted">Alumnos</h6><h2 th:text="${resumen['totalAlumnos']}">0</h2></div></div></div>
+  <div class="col-md-3"><div class="card card-stat shadow-sm"><div class="card-body"><h6 class="text-muted">Maestros</h6><h2 th:text="${resumen['totalMaestros']}">0</h2></div></div></div>
+  <div class="col-md-3"><div class="card card-stat shadow-sm"><div class="card-body"><h6 class="text-muted">Materias</h6><h2 th:text="${resumen['totalMaterias']}">0</h2></div></div></div>
+  <div class="col-md-3"><div class="card card-stat shadow-sm"><div class="card-body"><h6 class="text-muted">Promedio general</h6><h2 th:text="${#numbers.formatDecimal(resumen['promedioGeneral'],1,2)}">0.00</h2></div></div></div>
+</div>
+<div class="row g-3">
+<div class="col-md-6"><div class="card shadow-sm"><div class="card-header bg-white fw-bold">Promedio por grupo</div><div class="card-body">
+<table class="table table-sm"><thead><tr><th>Grupo</th><th>Alumnos</th><th>Promedio</th></tr></thead>
+<tbody><tr th:each="g : ${promedioPorGrupo}"><td th:text="${g['grupo']}"></td><td th:text="${g['totalAlumnos']}"></td><td th:text="${#numbers.formatDecimal(g['promedio'],1,2)}"></td></tr></tbody></table>
+</div></div></div>
+<div class="col-md-6"><div class="card shadow-sm"><div class="card-header bg-white fw-bold">Promedio por materia</div><div class="card-body">
+<table class="table table-sm"><thead><tr><th>Materia</th><th>Promedio</th><th>Calificaciones</th></tr></thead>
+<tbody><tr th:each="m : ${promedioPorMateria}"><td th:text="${m['materia']}"></td><td th:text="${#numbers.formatDecimal(m['promedio'],1,2)}"></td><td th:text="${m['totalCalificaciones']}"></td></tr></tbody></table>
+</div></div></div>
+<div class="col-md-6"><div class="card shadow-sm"><div class="card-header bg-white fw-bold">Top 10 alumnos</div><div class="card-body">
+<table class="table table-sm"><thead><tr><th>Matricula</th><th>Alumno</th><th>Promedio</th></tr></thead>
+<tbody><tr th:each="t : ${topAlumnos}"><td th:text="${t['matricula']}"></td><td th:text="${t['nombre']}"></td><td th:text="${#numbers.formatDecimal(t['promedio'],1,2)}"></td></tr></tbody></table>
+</div></div></div>
+<div class="col-md-6"><div class="card shadow-sm"><div class="card-header bg-white fw-bold">Reprobados por materia (calificacion &lt; 6)</div><div class="card-body">
+<table class="table table-sm"><thead><tr><th>Materia</th><th>Reprobados</th><th>Total</th></tr></thead>
+<tbody><tr th:each="r : ${reprobadosPorMateria}"><td th:text="${r['materia']}"></td><td th:text="${r['reprobados']}"></td><td th:text="${r['total']}"></td></tr></tbody></table>
+</div></div></div>
+</div>
+
+</main>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

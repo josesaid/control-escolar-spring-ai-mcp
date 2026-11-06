@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Asistente IA')}"></head>
+<body>
+<div th:replace="~{layout :: sidebar}"></div>
+<main class="content">
+<div th:replace="~{layout :: topbar('Asistente IA')}"></div>
+
+<div class="row g-3">
+<div class="col-md-8"><div class="card shadow-sm"><div class="card-body">
+<form th:action="@{/asistente/preguntar}" method="post">
+<label class="form-label">Pregunta al asistente escolar (en espanol)</label>
+<textarea class="form-control mb-2" name="pregunta" rows="3" placeholder="Ejemplo: Cual es el promedio del alumno ESC-001?" th:text="${pregunta}"></textarea>
+<button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Preguntar</button>
+</form>
+<div class="mt-3" th:if="${respuesta != null and !#strings.isEmpty(respuesta)}">
+<h6>Respuesta</h6><div class="alert alert-light border" style="white-space:pre-wrap" th:text="${respuesta}"></div>
+</div>
+<p class="text-muted mt-3" th:if="${respuesta == null or #strings.isEmpty(respuesta)}">Sin OPENAI_API_KEY el asistente responde con un aviso y puedes usar las tools MCP y los reportes. Con clave valida, usa el modelo gpt-4o-mini y las tools de abajo.</p>
+</div></div></div>
+<div class="col-md-4"><div class="card shadow-sm"><div class="card-header bg-white fw-bold">Tools disponibles (MCP + Chat)</div><div class="card-body">
+<ul class="list-group list-group-flush"><li class="list-group-item" th:each="t : ${tools}"><code th:text="${t}"></code></li></ul>
+<p class="small text-muted mt-2">Endpoint MCP (Streamable HTTP): <code>http://localhost:8080/mcp</code><br/>Recurso: <code>escolar://materias</code><br/>Prompt: <code>resumen-escolar</code></p>
+</div></div></div>
+</div>
+
+</main>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

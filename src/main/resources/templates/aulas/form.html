@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Aula')}"></head>
+<body>
+<div th:replace="~{layout :: sidebar}"></div>
+<main class="content">
+<div th:replace="~{layout :: topbar('Aula')}"></div>
+
+<div class="card shadow-sm"><div class="card-body">
+<form th:action="@{/aulas/guardar}" th:object="${aula}" method="post">
+<input type="hidden" th:field="*{id}"/>
+<div class="row g-3">
+<div class="col-md-4"><label class="form-label">Clave</label><input class="form-control" th:field="*{clave}" required/></div>
+<div class="col-md-8"><label class="form-label">Nombre</label><input class="form-control" th:field="*{nombre}" required/></div>
+<div class="col-md-4"><label class="form-label">Capacidad</label><input class="form-control" type="number" th:field="*{capacidad}"/></div>
+<div class="col-md-4"><label class="form-label">Edificio</label><input class="form-control" th:field="*{edificio}"/></div>
+<div class="col-md-4"><label class="form-label">Tipo</label><select class="form-select" th:field="*{tipo}"><option value="TEORIA">Teoria</option><option value="LABORATORIO">Laboratorio</option><option value="TALLER">Taller</option></select></div>
+</div>
+<div class="mt-3"><button class="btn btn-primary" type="submit">Guardar</button> <a class="btn btn-secondary" th:href="@{/aulas}">Cancelar</a></div>
+</form></div></div>
+
+</main>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

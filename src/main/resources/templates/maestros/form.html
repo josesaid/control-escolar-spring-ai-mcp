@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Maestro')}"></head>
+<body>
+<div th:replace="~{layout :: sidebar}"></div>
+<main class="content">
+<div th:replace="~{layout :: topbar('Maestro')}"></div>
+
+<div class="card shadow-sm"><div class="card-body">
+<form th:action="@{/maestros/guardar}" th:object="${maestro}" method="post">
+<input type="hidden" th:field="*{id}"/>
+<div class="row g-3">
+<div class="col-md-4"><label class="form-label">No. empleado</label><input class="form-control" th:field="*{numeroEmpleado}" required/></div>
+<div class="col-md-4"><label class="form-label">Nombre</label><input class="form-control" th:field="*{nombre}" required/></div>
+<div class="col-md-4"><label class="form-label">Apellido paterno</label><input class="form-control" th:field="*{apellidoPaterno}" required/></div>
+<div class="col-md-4"><label class="form-label">Apellido materno</label><input class="form-control" th:field="*{apellidoMaterno}"/></div>
+<div class="col-md-4"><label class="form-label">Email</label><input class="form-control" type="email" th:field="*{email}"/></div>
+<div class="col-md-4"><label class="form-label">Telefono</label><input class="form-control" th:field="*{telefono}"/></div>
+<div class="col-md-6"><label class="form-label">Especialidad</label><input class="form-control" th:field="*{especialidad}"/></div>
+<div class="col-md-6"><label class="form-label">Activo</label><select class="form-select" th:field="*{activo}"><option value="true">Si</option><option value="false">No</option></select></div>
+</div>
+<div class="mt-3"><button class="btn btn-primary" type="submit">Guardar</button> <a class="btn btn-secondary" th:href="@{/maestros}">Cancelar</a></div>
+</form></div></div>
+
+</main>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

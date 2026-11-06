@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Alumnos')}"></head>
+<body>
+<div th:replace="~{layout :: sidebar}"></div>
+<main class="content">
+<div th:replace="~{layout :: topbar('Alumnos')}"></div>
+
+<div class="mb-3"><a class="btn btn-primary" th:href="@{/alumnos/nuevo}"><i class="bi bi-plus-lg"></i> Nuevo alumno</a></div>
+<div class="card shadow-sm"><div class="card-body table-responsive">
+<table class="table table-striped table-hover"><thead><tr><th>Matricula</th><th>Nombre</th><th>Email</th><th>Grupo</th><th>Activo</th><th>Acciones</th></tr></thead>
+<tbody><tr th:each="a : ${alumnos}">
+<td th:text="${a.matricula}"></td><td th:text="${a.nombreCompleto}"></td><td th:text="${a.email}"></td>
+<td th:text="${a.grupo != null ? a.grupo.clave : '-'}"></td><td th:text="${a.activo ? 'Si' : 'No'}"></td>
+<td><a class="btn btn-sm btn-outline-primary" th:href="@{'/alumnos/editar/' + ${a.id}}">Editar</a>
+<a class="btn btn-sm btn-outline-danger" th:href="@{'/alumnos/eliminar/' + ${a.id}}" onclick="return confirm('Eliminar este alumno?')">Eliminar</a></td>
+</tr></tbody></table>
+<p class="text-muted" th:if="${#lists.isEmpty(alumnos)}">Sin alumnos registrados.</p>
+</div></div>
+
+</main>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>
