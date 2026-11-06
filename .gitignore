@@ -1,19 +1,37 @@
-# Maven
+# Build output
 target/
+build/
+out/
 
-# IntelliJ IDEA
+# IDE
 .idea/
 *.iml
-
-# Eclipse / VS Code
 .classpath
 .project
 .settings/
 .vscode/
 
-# Sistema operativo
+# OS
 .DS_Store
+Thumbs.db
 
-# Logs y variables locales
-*.log
+# Environment files and secrets
 .env
+*.env
+.env.*
+application-local.properties
+*.pem
+*.key
+
+# Logs and local data
+*.log
+logs/
+data/
+*.db
+
+# Coverage
+jacoco.exec
+coverage/
+
+# Claude Code local files
+.claude/

@@ -1,0 +1,144 @@
+<!doctype html>
+<!-- Theme: Notebook (ruled paper, ink blue, red margin line, pencil gray) -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Escolar MCP</title>
+<meta name="description" content="School management system with Spring Boot 4.1.1, Spring AI 2.0.1, an AI assistant and an MCP server.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fdfbf4;
+    --rule: #dbe6f3;
+    --margin: #e57373;
+    --ink: #1e3a8a;
+    --ink-soft: #3b5bab;
+    --text: #2b2b2b;
+    --pencil: #6b6b6b;
+    --card: #ffffff;
+    --card-border: #d9d3c2;
+    --highlight: #fff3a8;
+    --code-bg: #f1eee4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181d;
+      --rule: #23283a;
+      --margin: #a14a4a;
+      --ink: #8fb0ff;
+      --ink-soft: #a9c1ff;
+      --text: #e6e3da;
+      --pencil: #a3a3a3;
+      --card: #1d2027;
+      --card-border: #343846;
+      --highlight: #4a4320;
+      --code-bg: #262a33;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181d; --rule: #23283a; --margin: #a14a4a; --ink: #8fb0ff; --ink-soft: #a9c1ff;
+    --text: #e6e3da; --pencil: #a3a3a3; --card: #1d2027; --card-border: #343846; --highlight: #4a4320; --code-bg: #262a33;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(to right, transparent 46px, var(--margin) 46px, var(--margin) 48px, transparent 48px),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--rule) 31px, var(--rule) 32px);
+    color: var(--text);
+    font: 17px/1.6 "Source Sans 3", system-ui, sans-serif;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 64px 72px; }
+  h1, h2 { font-family: "Patrick Hand", cursive; color: var(--ink); font-weight: 400; }
+  h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.1; margin: 0 0 8px; }
+  h2 { font-size: 2rem; margin: 40px 0 12px; }
+  .lead { font-size: 1.15rem; max-width: 62ch; }
+  mark { background: var(--highlight); color: inherit; padding: 0 3px; }
+  .links { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 8px; }
+  .btn { display: inline-block; padding: 8px 16px; border: 2px solid var(--ink); border-radius: 6px; color: var(--ink); text-decoration: none; font-weight: 600; background: var(--card); }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px 18px; box-shadow: 2px 3px 0 var(--card-border); }
+  .card h3 { margin: 0 0 6px; color: var(--ink-soft); font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--pencil); font-size: .95rem; }
+  ul.chips { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  ul.chips li { border: 1px dashed var(--ink-soft); color: var(--ink-soft); border-radius: 999px; padding: 2px 12px; font-size: .9rem; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--card-border); }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--card-border); vertical-align: top; }
+  th { color: var(--ink); font-weight: 700; }
+  .table-scroll { overflow-x: auto; }
+  code { font-family: "JetBrains Mono", monospace; font-size: .86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+  pre { background: var(--code-bg); padding: 14px; border-radius: 8px; overflow-x: auto; border: 1px solid var(--card-border); }
+  pre code { background: none; padding: 0; }
+  footer { margin-top: 48px; color: var(--pencil); font-size: .9rem; }
+  footer a, p a { color: var(--ink); }
+  @media (max-width: 600px) {
+    body { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--rule) 31px, var(--rule) 32px); }
+    .wrap { padding: 24px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Control Escolar — Spring AI + MCP</h1>
+  <p class="lead">A school management web app (students, teachers, subjects, classrooms, schedules, grades, reports, users and roles) with an <mark>AI assistant</mark> built on the Spring AI <code>ChatClient</code> and an <mark>MCP server</mark> that exposes school data to any MCP client.</p>
+  <div class="links">
+    <a class="btn primary" href="https://github.com/josesaid/control-escolar-spring-ai-mcp">Source on GitHub</a>
+    <a class="btn" href="https://josesaid.github.io/">All projects</a>
+  </div>
+
+  <h2>Stack</h2>
+  <ul class="chips">
+    <li>Java 21</li><li>Spring Boot 4.1.1</li><li>Spring AI 2.0.1</li><li>OpenAI gpt-4o-mini</li><li>text-embedding-3-small</li>
+    <li>MCP Streamable HTTP</li><li>SimpleVectorStore</li><li>Spring Security</li><li>Thymeleaf + Bootstrap 5.3</li>
+    <li>H2 / PostgreSQL</li><li>Micrometer Prometheus</li>
+  </ul>
+
+  <h2>What's inside</h2>
+  <div class="grid">
+    <div class="card"><h3>MCP server</h3><p>16 tools, 5 resources, 1 resource template, 3 prompts and 3 completions at <code>/mcp</code>.</p></div>
+    <div class="card"><h3>Chat memory</h3><p><code>MessageChatMemoryAdvisor</code> with a JDBC repository, one conversation per user.</p></div>
+    <div class="card"><h3>RAG</h3><p><code>QuestionAnswerAdvisor</code> over the school rules and calendar in a <code>SimpleVectorStore</code>.</p></div>
+    <div class="card"><h3>Safeguards</h3><p><code>SafeGuardAdvisor</code> blocks sensitive words before they reach memory.</p></div>
+    <div class="card"><h3>Streaming &amp; structured output</h3><p>SSE token streaming and <code>.entity(AnalisisAlumno.class)</code> for student analysis.</p></div>
+    <div class="card"><h3>Secure tool calling</h3><p><code>registrarCalificacion</code> reads the user's role from <code>ToolContext</code>, which the model cannot alter.</p></div>
+  </div>
+
+  <h2>MCP tools</h2>
+  <ul class="chips">
+    <li>consultar-alumno-por-matricula</li><li>promedio-alumno</li><li>calificaciones-por-materia</li><li>listar-horario-grupo</li>
+    <li>buscar-maestro</li><li>generar-reporte-grupo</li><li>listar-alumnos-en-riesgo</li><li>porcentaje-asistencia-alumno</li>
+    <li>calificaciones-alumno-periodo</li><li>horario-maestro</li><li>listar-aulas</li><li>promedio-por-materia</li>
+    <li>promedio-por-grupo</li><li>resumen-general</li><li>top-alumnos</li><li>consultar-reglamento</li>
+  </ul>
+
+  <h2>Endpoints</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Path</th><th>Description</th></tr>
+    <tr><td><code>/mcp</code></td><td>MCP server (Streamable HTTP, SYNC), no login</td></tr>
+    <tr><td><code>/asistente</code>, <code>/asistente/stream</code></td><td>AI assistant page and SSE stream</td></tr>
+    <tr><td><code>POST /api/ia/preguntar</code></td><td>Ask the assistant (JSON)</td></tr>
+    <tr><td><code>GET /api/ia/analisis-alumno/{matricula}</code></td><td>Structured student analysis</td></tr>
+    <tr><td><code>GET /api/alumnos[/…]</code></td><td>Students (by id, ID number, group)</td></tr>
+    <tr><td><code>GET /api/calificaciones[/…]</code></td><td>Grades and averages</td></tr>
+    <tr><td><code>/reportes/exportar-csv</code></td><td>CSV report export</td></tr>
+    <tr><td><code>/actuator/prometheus</code></td><td>Metrics, including <code>gen_ai_client_*</code></td></tr>
+  </table>
+  </div>
+
+  <h2>Run it</h2>
+<pre><code>export OPENAI_API_KEY=&lt;your key&gt;   # optional
+mvn spring-boot:run
+# open http://localhost:8080  (demo user: admin / admin123)
+npx @modelcontextprotocol/inspector   # connect to http://localhost:8080/mcp</code></pre>
+
+  <footer>
+    By <a href="https://github.com/josesaid">josesaid</a> · <a href="https://github.com/josesaid/control-escolar-spring-ai-mcp">Repository</a> · <a href="https://josesaid.github.io/">Projects index</a>
+  </footer>
+</main>
+</body>
+</html>

@@ -8,7 +8,7 @@
         <version>4.1.1</version>
         <relativePath/>
     </parent>
-    <groupId>com.escuela</groupId>
+    <groupId>com.mx.development.jose</groupId>
     <artifactId>control-escolar</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
