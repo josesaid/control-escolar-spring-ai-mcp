@@ -5,14 +5,14 @@ Aplicacion de control escolar (alumnos, maestros, materias, aulas, horarios, cal
 ## Stack
 - Java 21, Maven, packaging `jar`, Tomcat embebido, puerto **8080**
 - Spring Boot **4.1.1** (Spring Framework 7)
-- Spring AI **2.0.1** — `spring-ai-starter-mcp-server-webmvc` (Streamable HTTP) y `spring-ai-starter-model-openai` (gpt-4o-mini)
+- Spring AI **2.0.1** — `spring-ai-starter-mcp-server-webmvc` (Streamable HTTP), `spring-ai-starter-model-openai` (gpt-4o-mini y `text-embedding-3-small`), `spring-ai-starter-model-chat-memory-repository-jdbc` (memoria), `spring-ai-vector-store` + `spring-ai-vector-store-advisor` (RAG)
 - Spring Data JPA + Spring Security + Thymeleaf + Bootstrap 5.3
-- Spring Boot Actuator (`/actuator/health`, `/actuator/info`)
+- Spring Boot Actuator (`/actuator/health`, `/actuator/info`, `/actuator/metrics`, `/actuator/prometheus`) + Micrometer Prometheus
 - H2 en memoria para desarrollo; driver PostgreSQL incluido (perfil comentado en `application.properties`)
 
 ## Requisitos
 - JDK 21 y Maven 3.9+ instalados (`java -version`, `mvn -version`).
-- Sin `OPENAI_API_KEY` (o con el valor por defecto `demo`) la app arranca igual: el asistente responde con un aviso y las tools MCP siguen funcionando.
+- Sin `OPENAI_API_KEY` (o con el valor por defecto `demo`) la app arranca igual: el asistente responde con un aviso, las tools MCP siguen funcionando y `consultar-reglamento` busca por palabras clave en lugar de usar embeddings.
 
 ## Como correr
 ```bash
@@ -49,6 +49,8 @@ La base H2 se recrea en cada arranque (`ddl-auto=create-drop`) y `DataSeeder` la
 | Aulas | 4: `A101`, `A102`, `LAB1`, `B201` |
 | Grupos | 3: `1A`, `2A`, `3A` |
 | Horarios, calificaciones e inscripciones | periodo `2026-1` |
+| Asistencias | 10 dias por alumno, con 0 a 3 faltas (algunos quedan bajo el 80 %) |
+| Reglamento y calendario | `src/main/resources/documentos/*.md` (base de conocimiento para RAG) |
 
 Consola H2: http://localhost:8080/h2-console (JDBC `jdbc:h2:mem:controlescolar`, usuario `sa`, sin contrasena).
 
@@ -83,17 +85,47 @@ Ademas cada usuario tiene **permisos** (`LEER_ALUMNOS`, `CREAR_ALUMNOS`, `EDITAR
 | `buscar-maestro` | `numeroEmpleado` | `EMP-001` |
 | `generar-reporte-grupo` | `claveGrupo` | `2A` |
 | `listar-alumnos-en-riesgo` | — | — |
+| `porcentaje-asistencia-alumno` | `matricula` | `ESC-004` |
+| `calificaciones-alumno-periodo` | `matricula`, `periodo` | `ESC-001`, `2026-1` |
+| `horario-maestro` | `numeroEmpleado` | `EMP-001` |
+| `listar-aulas` | — | — |
+| `promedio-por-materia` | — | — |
+| `promedio-por-grupo` | — | — |
+| `resumen-general` | — | — |
+| `top-alumnos` | `limite` (opcional, 5 por defecto, max 50) | `3` |
+| `consultar-reglamento` | `consulta` | `asistencia minima` |
 
-- Recurso: `escolar://materias` (JSON con clave y nombre) — Prompt: `resumen-escolar`
+- Recursos: `escolar://materias`, `escolar://grupos`, `escolar://maestros` (JSON), `escolar://reglamento`, `escolar://calendario` (Markdown)
+- Plantilla de recurso: `escolar://alumnos/{matricula}` (ficha JSON con promedio y porcentaje de asistencia)
+- Prompts: `resumen-escolar`, `analisis-alumno(matricula)`, `plan-mejora-grupo(claveGrupo)`
+- Completions (`@McpComplete`): autocompletan `matricula` en `analisis-alumno` y en `escolar://alumnos/{matricula}`, y `claveGrupo` en `plan-mejora-grupo`
 - Prueba con MCP Inspector: `npx @modelcontextprotocol/inspector` y conecta a http://localhost:8080/mcp
 
-Los mismos metodos de `EscolarTools` se registran tambien como `@Tool` de Spring AI para el asistente interno (ChatClient); ahi se exponen con el nombre del metodo Java (`consultarAlumnoPorMatricula`, `promedioAlumno`, etc.).
+Los mismos metodos de `EscolarTools` y `ConocimientoEscolar` se registran tambien como `@Tool` de Spring AI para el asistente interno (ChatClient); ahi se exponen con el nombre del metodo Java (`consultarAlumnoPorMatricula`, `promedioAlumno`, etc.).
+
+## Asistente IA (ChatClient)
+Pagina `/asistente`. Con `OPENAI_API_KEY` valida usa:
+
+| Componente de Spring AI | Uso |
+|---|---|
+| `MessageChatMemoryAdvisor` + `JdbcChatMemoryRepository` | Memoria por usuario en la tabla `SPRING_AI_CHAT_MEMORY`; boton "Nueva conversacion" la borra |
+| `SafeGuardAdvisor` | Bloquea preguntas con `escolar.ia.palabras-bloqueadas`; corre antes que la memoria para no guardar lo bloqueado |
+| `QuestionAnswerAdvisor` + `SimpleVectorStore` | RAG sobre el reglamento y el calendario (indexados al arrancar) |
+| `SimpleLoggerAdvisor` | Peticiones y respuestas en el log con `logging.level.org.springframework.ai.chat.client.advisor=DEBUG` |
+| `.stream()` + SSE | La pagina muestra la respuesta token por token (`GET /asistente/stream`) |
+| `.entity(AnalisisAlumno.class)` | Structured output en `GET /api/ia/analisis-alumno/{matricula}` |
+| `ToolContext` | Pasa usuario y roles a la tool `registrarCalificacion` |
+| Observabilidad (Micrometer) | Metricas `gen_ai_client_*` (tokens, latencia) en `/actuator/prometheus` |
+
+**Tool de escritura `registrarCalificacion`:** solo existe en el chat (no en MCP, porque `/mcp` no tiene usuario autenticado). Solo la pueden usar ADMIN, DIRECTOR y MAESTRO; el rol se lee del `ToolContext`, que el modelo no puede alterar.
 
 ## API REST
 Solo lectura (JSON). **Requiere sesion iniciada**: sin autenticacion la respuesta es una redireccion a `/login`. CSRF esta deshabilitado para `/api/**`.
 
 - `GET /api/alumnos`, `GET /api/alumnos/{id}`, `GET /api/alumnos/matricula/{matricula}`, `GET /api/alumnos/grupo/{grupoId}`
 - `GET /api/calificaciones`, `GET /api/calificaciones/alumno/{alumnoId}`, `GET /api/calificaciones/alumno/{alumnoId}/promedio`, `GET /api/calificaciones/materia/{materiaId}/promedio`
+- `POST /api/ia/preguntar` con `{"pregunta": "..."}` (usa la memoria del usuario de la sesion)
+- `GET /api/ia/analisis-alumno/{matricula}` → `AnalisisAlumno` (promedio, asistencia, nivel de riesgo, fortalezas, areas de oportunidad, recomendaciones); `503` sin clave de OpenAI
 
 ## Estructura
 ```
@@ -105,15 +137,19 @@ src/main/java/com/escuela/controlescolar/
   service/ AlumnoService, MaestroService, MateriaService, AulaService, GrupoService, HorarioService,
            CalificacionService, UsuarioService, ReporteService, AsistenciaService
   controller/web/  Dashboard, Alumno, Maestro, Materia, Aula, Horario, Calificacion, Usuario, Rol, Reporte, Asistente
-  controller/api/  ApiAlumno, ApiCalificacion
-  ai/      EscolarTools (@Tool + @McpTool, @McpResource, @McpPrompt), AsistenteIAService (ChatClient)
+  controller/api/  ApiAlumno, ApiCalificacion, ApiAsistente
+  ai/      EscolarTools (@Tool + @McpTool, @McpResource, @McpPrompt, @McpComplete),
+           EscolarEscrituraTools (@Tool con ToolContext), ConocimientoEscolar (RAG + consultar-reglamento),
+           AsistenteIAService (ChatClient + advisors), AnalisisAlumno (structured output)
 src/main/resources/application.properties
+src/main/resources/documentos/  reglamento-escolar.md, calendario-escolar.md
 src/main/resources/templates/  layout, login y vistas Thymeleaf por modulo
 src/main/resources/static/css/style.css
 ```
 
 ## Estado actual y pendientes
-- **Asistencia:** existen la entidad, el repositorio y `AsistenciaService`, pero todavia no hay controlador, vistas ni datos de ejemplo.
+- **Asistencia:** hay datos de ejemplo y tool de IA, pero todavia no hay controlador ni vistas.
 - **Grupos e inscripciones:** se cargan desde `DataSeeder`; no hay CRUD web para ellos.
-- **Pruebas:** el `pom.xml` incluye `spring-boot-starter-test`, pero aun no hay pruebas en `src/test`.
+- **Pruebas:** `mvn test` corre las pruebas unitarias de las tools y el arranque sin clave. `AsistenteIAEvaluacionTest` (`RelevancyEvaluator` + structured output) solo corre si `OPENAI_API_KEY` empieza con `sk-` y consume tokens.
+- **RAG:** `SimpleVectorStore` vive en memoria y se reindexa en cada arranque; en produccion conviene PGVector.
 - `WebConfig` y `SecurityConfig` mapean `/js/**`, pero la carpeta `static/js` todavia no existe.

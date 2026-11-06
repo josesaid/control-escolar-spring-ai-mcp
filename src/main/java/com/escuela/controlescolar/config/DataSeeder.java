@@ -1,6 +1,7 @@
 package com.escuela.controlescolar.config;
 
 import com.escuela.controlescolar.model.Alumno;
+import com.escuela.controlescolar.model.Asistencia;
 import com.escuela.controlescolar.model.Aula;
 import com.escuela.controlescolar.model.Calificacion;
 import com.escuela.controlescolar.model.Grupo;
@@ -12,6 +13,7 @@ import com.escuela.controlescolar.model.Permiso;
 import com.escuela.controlescolar.model.Rol;
 import com.escuela.controlescolar.model.Usuario;
 import com.escuela.controlescolar.repository.AlumnoRepository;
+import com.escuela.controlescolar.repository.AsistenciaRepository;
 import com.escuela.controlescolar.repository.AulaRepository;
 import com.escuela.controlescolar.repository.CalificacionRepository;
 import com.escuela.controlescolar.repository.GrupoRepository;
@@ -44,6 +46,7 @@ public class DataSeeder implements CommandLineRunner {
     private final HorarioRepository horarioRepository;
     private final CalificacionRepository calificacionRepository;
     private final InscripcionRepository inscripcionRepository;
+    private final AsistenciaRepository asistenciaRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(UsuarioRepository usuarioRepository,
@@ -55,6 +58,7 @@ public class DataSeeder implements CommandLineRunner {
                       HorarioRepository horarioRepository,
                       CalificacionRepository calificacionRepository,
                       InscripcionRepository inscripcionRepository,
+                      AsistenciaRepository asistenciaRepository,
                       PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.grupoRepository = grupoRepository;
@@ -65,6 +69,7 @@ public class DataSeeder implements CommandLineRunner {
         this.horarioRepository = horarioRepository;
         this.calificacionRepository = calificacionRepository;
         this.inscripcionRepository = inscripcionRepository;
+        this.asistenciaRepository = asistenciaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -79,6 +84,7 @@ public class DataSeeder implements CommandLineRunner {
         sembrarHorarios(materias, maestros, aulas, grupos);
         sembrarCalificaciones(alumnos, materias);
         sembrarInscripciones(alumnos, grupos, materias);
+        sembrarAsistencias(alumnos, materias);
     }
 
     private void sembrarUsuarios() {
@@ -310,6 +316,26 @@ public class DataSeeder implements CommandLineRunner {
                 inscripcion.setPeriodo("2026-1");
                 inscripcion.setFechaInscripcion(LocalDate.of(2026, 1, 10));
                 inscripcionRepository.save(inscripcion);
+            }
+        }
+    }
+
+    /**
+     * 10 días de clase por alumno en su primera materia. El número de faltas
+     * varía por alumno (0 a 3) para que haya casos por debajo del 80 %.
+     */
+    private void sembrarAsistencias(List<Alumno> alumnos, List<Materia> materias) {
+        if (asistenciaRepository.count() != 0) {
+            return;
+        }
+        for (int a = 0; a < alumnos.size(); a++) {
+            Alumno alumno = alumnos.get(a);
+            Materia materia = materias.get(a % materias.size());
+            int faltas = a % 4;
+            for (int dia = 0; dia < 10; dia++) {
+                boolean presente = dia >= faltas;
+                asistenciaRepository.save(new Asistencia(alumno, materia, LocalDate.of(2026, 2, 2).plusDays(dia),
+                        presente, presente ? null : "Falta sin justificar"));
             }
         }
     }
