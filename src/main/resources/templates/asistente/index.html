@@ -8,23 +8,101 @@
 
 <div class="row g-3">
 <div class="col-md-8"><div class="card shadow-sm"><div class="card-body">
-<form th:action="@{/asistente/preguntar}" method="post">
-<label class="form-label">Pregunta al asistente escolar (en espanol)</label>
-<textarea class="form-control mb-2" name="pregunta" rows="3" placeholder="Ejemplo: Cual es el promedio del alumno ESC-001?" th:text="${pregunta}"></textarea>
-<button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Preguntar</button>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+<h6 class="mb-0">Conversación</h6>
+<form th:action="@{/asistente/limpiar}" method="post">
+<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-trash"></i> Nueva conversación</button>
 </form>
-<div class="mt-3" th:if="${respuesta != null and !#strings.isEmpty(respuesta)}">
-<h6>Respuesta</h6><div class="alert alert-light border" style="white-space:pre-wrap" th:text="${respuesta}"></div>
 </div>
-<p class="text-muted mt-3" th:if="${respuesta == null or #strings.isEmpty(respuesta)}">Sin OPENAI_API_KEY el asistente responde con un aviso y puedes usar las tools MCP y los reportes. Con clave valida, usa el modelo gpt-4o-mini y las tools de abajo.</p>
+
+<div id="conversacion" class="mb-3" style="max-height:480px;overflow-y:auto">
+<div th:each="m : ${historial}" th:class="${m.messageType.name() == 'USER'} ? 'alert alert-primary py-2 mb-2' : 'alert alert-light border py-2 mb-2'" style="white-space:pre-wrap" th:text="${m.text}"></div>
+<div th:if="${respuesta != null and !#strings.isEmpty(respuesta) and #lists.isEmpty(historial)}">
+<div class="alert alert-primary py-2 mb-2" style="white-space:pre-wrap" th:text="${pregunta}"></div>
+<div class="alert alert-light border py-2 mb-2" style="white-space:pre-wrap" th:text="${respuesta}"></div>
+</div>
+</div>
+
+<form id="form-pregunta" th:action="@{/asistente/preguntar}" method="post" th:attr="data-stream-url=@{/asistente/stream}">
+<label class="form-label">Pregunta al asistente escolar (en español)</label>
+<textarea id="pregunta" class="form-control mb-2" name="pregunta" rows="3" placeholder="Ejemplo: ¿Cuál es el promedio del alumno ESC-001? ¿Cuál es la calificación mínima aprobatoria?"></textarea>
+<button id="btn-preguntar" class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Preguntar</button>
+</form>
+
+<p class="text-muted mt-3 small" th:unless="${configurado}">Sin OPENAI_API_KEY el asistente responde con un aviso y puedes usar las tools MCP y los reportes. Con clave válida usa gpt-4o-mini, memoria de conversación, RAG sobre el reglamento y las tools de la derecha.</p>
 </div></div></div>
+
 <div class="col-md-4"><div class="card shadow-sm"><div class="card-header bg-white fw-bold">Tools disponibles (MCP + Chat)</div><div class="card-body">
-<ul class="list-group list-group-flush"><li class="list-group-item" th:each="t : ${tools}"><code th:text="${t}"></code></li></ul>
-<p class="small text-muted mt-2">Endpoint MCP (Streamable HTTP): <code>http://localhost:8080/mcp</code><br/>Recurso: <code>escolar://materias</code><br/>Prompt: <code>resumen-escolar</code></p>
+<ul class="list-group list-group-flush">
+<li class="list-group-item" th:each="t : ${tools}"><code th:text="${t}"></code></li>
+<li class="list-group-item" th:each="t : ${toolsConocimiento}"><code th:text="${t}"></code> <span class="badge bg-info text-dark">RAG</span></li>
+<li class="list-group-item" th:each="t : ${toolsEscritura}"><code th:text="${t}"></code> <span class="badge bg-warning text-dark">solo chat, escritura</span></li>
+</ul>
+<p class="small text-muted mt-2">Endpoint MCP (Streamable HTTP): <code>http://localhost:8080/mcp</code><br/>
+Recursos: <code>escolar://materias</code>, <code>escolar://grupos</code>, <code>escolar://maestros</code>, <code>escolar://alumnos/{matricula}</code>, <code>escolar://reglamento</code>, <code>escolar://calendario</code><br/>
+Prompts: <code>resumen-escolar</code>, <code>analisis-alumno</code>, <code>plan-mejora-grupo</code><br/>
+API: <code>GET /api/ia/analisis-alumno/{matricula}</code></p>
 </div></div></div>
 </div>
 
 </main>
 <div th:replace="~{layout :: scripts}"></div>
+<script>
+(function () {
+  const form = document.getElementById('form-pregunta');
+  const campo = document.getElementById('pregunta');
+  const boton = document.getElementById('btn-preguntar');
+  const conversacion = document.getElementById('conversacion');
+  if (!window.EventSource) {
+    return; // sin SSE el formulario se envía de forma normal
+  }
+
+  function burbuja(clase, texto) {
+    const div = document.createElement('div');
+    div.className = clase;
+    div.style.whiteSpace = 'pre-wrap';
+    div.textContent = texto;
+    conversacion.appendChild(div);
+    conversacion.scrollTop = conversacion.scrollHeight;
+    return div;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const pregunta = campo.value.trim();
+    if (!pregunta) {
+      return;
+    }
+    burbuja('alert alert-primary py-2 mb-2', pregunta);
+    const respuesta = burbuja('alert alert-light border py-2 mb-2', '');
+    campo.value = '';
+    boton.disabled = true;
+
+    const url = form.dataset.streamUrl + '?pregunta=' + encodeURIComponent(pregunta);
+    const fuente = new EventSource(url);
+    const terminar = function () {
+      fuente.close();
+      boton.disabled = false;
+      campo.focus();
+    };
+    fuente.onmessage = function (evento) {
+      const datos = JSON.parse(evento.data);
+      if (datos.fin) {
+        terminar();
+        return;
+      }
+      respuesta.textContent += datos.t;
+      conversacion.scrollTop = conversacion.scrollHeight;
+    };
+    fuente.onerror = function () {
+      if (!respuesta.textContent) {
+        respuesta.textContent = 'Se perdió la conexión con el asistente. Intenta de nuevo.';
+      }
+      terminar();
+    };
+  });
+})();
+</script>
 </body>
 </html>
